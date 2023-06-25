@@ -1,0 +1,178 @@
+{
+  "actions": {
+    "clear": "Vider",
+    "close": "Fermer",
+    "delete": "Supprimer",
+    "export": "Exporter",
+    "import": "Importer",
+    "load": "Charger",
+    "reconnecting": "En reconnection",
+    "refresh": "Rafraîchir",
+    "save": "Sauvegarder",
+    "template": "Modèle"
+  },
+  "contextMenu": {
+    "Add Group": "Ajouter groupe",
+    "Add Node": "Ajouter noeud",
+    "Save Selected as Template": "Enregistrer la sélection en tant que modèle"
+  },
+  "dialogs": {
+    "settings": {
+      "title": "Paramètres"
+    }
+  },
+  "extensions": {
+    "core": {
+      "colorPalette": {
+        "label": "Palette de couleurs"
+      },
+      "confirmClear": {
+        "label": "Exiger une confirmation lors de l'effacement du flux de travail"
+      },
+      "editAttention": {
+        "delta": {
+          "label": "Précision Ctrl+haut/bas"
+        }
+      },
+      "i18n": {
+        "label": "Langue"
+      },
+      "invertMenuScrolling": {
+        "label": "Inverser le défilement du menu"
+      },
+      "menuPosition": {
+        "label": "Sauver la position du menu"
+      },
+      "nodeSuggestions": {
+        "number": {
+          "label": "Nombre de suggestions de noeuds"
+        }
+      },
+      "previewFormat": {
+        "label": "Lors de l'affichage d'un aperçu dans le widget d'image, convertissez-le en une image légère, par ex. webp, jpeg, webp;50, etc."
+      },
+      "promptFilename": {
+        "label": "Demander le nom du fichier lors de l'enregistrement du flux de travail"
+      },
+      "snapToGrid": {
+        "gridSize": {
+          "label": "Taille de la grille",
+          "tooltip": "Les noeuds seront alignés sur la grille lorsque vous les glisser et redimensionnez en maintenant la touche Maj. Cela contrôle la taille de cette grille."
+        }
+      }
+    }
+  },
+  "mainMenu": {
+    "clipspace": {
+      "label": "Espace découpage"
+    },
+    "extraOptions": {
+      "label": "Options supplémentaires",
+      "autoQueue": {
+        "tooltip": "Inviter automatiquement la file d'attente lorsque la taille de la file d'attente atteint 0"
+      },
+      "batchCount": "Nombre de lots"
+    },
+    "history": {
+      "clear": "Vider l'historique",
+      "history": "Historique",
+      "view": "Voir l'historique"
+    },
+    "loadDefault": {
+      "label": "Charger Défaut"
+    },
+    "queue": {
+      "clear": "Vider la pile",
+      "front": "Piler devant",
+      "running": "En cours",
+      "pending": "En attente",
+      "prompt": "Empiler",
+      "view": "Voir pile"
+    }
+  },
+  "nodes": {
+    "categories": {
+      "_for_testing": "_pour_tester",
+      "advanced": "avancé",
+      "conditioning": "conditionnement",
+      "image": "image",
+      "latent": "latent",
+      "loaders": "chargeurs",
+      "mask": "masque",
+      "sampling": "échantillonnage",
+      "utils": "outils"
+    },
+    "CLIPLoader": "Chargeur CLIP",
+    "CLIPSetLastLayer": "CLIP fixer la dernière couche",
+    "CLIPTextEncode": "Encodage de texte CLIP (indication)",
+    "CLIPVisionEncode": "Encodage vision CLIP",
+    "CLIPVisionLoader": "Charger vision CLIP",
+    "CheckpointLoader": "Charger le point de contrôle (avec config)",
+    "CheckpointLoaderSimple": "Charger le point de contrôle",
+    "ConditioningAverage ": "Conditionnement (moyenne)",
+    "ConditioningCombine": "Conditionnement (combiner)",
+    "ConditioningSetArea": "Conditionnement (fixer la zone)",
+    "ConditioningSetMask": "Conditionnement (fixer le masque)",
+    "ControlNetApply": "Appliquer ControlNet",
+    "ControlNetLoader": "Charger le modèle ControlNet",
+    "CropMask": "Masque de recadrage",
+    "DiffControlNetLoader": "Charger le modèle ControlNet (diff)",
+    "DiffusersLoader": "Chargeur de diffusions",
+    "EmptyLatentImage": "Vider l'image latente",
+    "FeatherMask": "FeatherMask",
+    "GLIGENLoader": "GLIGENLoader",
+    "GLIGENTextBoxApply": "GLIGENTextBoxApply",
+    "HypernetworkLoader": "HypernetworkLoader",
+    "ImageBlend": "ImageBlend",
+    "ImageBlur": "ImageBlur",
+    "ImageInvert": "Invert Image",
+    "ImagePadForOutpaint": "Pad Image for Outpainting",
+    "ImageQuantize": "ImageQuantize",
+    "ImageScale": "Upscale Image",
+    "ImageScaleBy": "Upscale Image By",
+    "ImageSharpen": "ImageSharpen",
+    "ImageToMask": "Convert Image to Mask",
+    "ImageUpscaleWithModel": "Upscale Image (using Model)",
+    "InvertMask": "InvertMask",
+    "KSampler": "KSampler",
+    "KSamplerAdvanced": "KSampler (Avancé)",
+    "LatentComposite": "Latent Composite",
+    "LatentCompositeMasked": "LatentCompositeMasked",
+    "LatentCrop": "Crop Latent",
+    "LatentFlip": "Flip Latent",
+    "LatentFromBatch": "Latent From Batch",
+    "LatentRotate": "Rotate Latent",
+    "LatentUpscale": "Upscale Latent",
+    "LatentUpscaleBy": "Upscale Latent By",
+    "LoadImage": "Load Image",
+    "LoadImageMask": "Load Image (as Mask)",
+    "LoadLatent": "LoadLatent",
+    "LoraLoader": "Load LoRA",
+    "MaskComposite": "MaskComposite",
+    "MaskToImage": "Convert Mask to Image",
+    "ModelMergeBlocks": "ModelMergeBlocks",
+    "ModelMergeSimple": "ModelMergeSimple",
+    "NoteNode": "Note",
+    "PreviewImage": "Preview Image",
+    "PrimitiveNode": "Primitif",
+    "RebatchLatents": "Rebatch Latents",
+    "RepeatLatentBatch": "Repeat Latent Batch",
+    "RerouteNode": "Dérouter",
+    "SaveImage": "Sauvarger l'image",
+    "SaveLatent": "SaveLatent",
+    "SetLatentNoiseMask": "Définir le masque de bruit latent",
+    "SolidMask": "SolidMask",
+    "StyleModelApply": "Appliquer le modèle Style",
+    "StyleModelLoader": "Charger le modèle Style",
+    "TomePatchModel": "TomePatchModel",
+    "UpscaleModelLoader": "Charge le modèle Upscale",
+    "VAEDecode": "VAE Decode",
+    "VAEDecodeTiled": "VAE Decode (Tiled)",
+    "VAEEncode": "VAE Encode",
+    "VAEEncodeForInpaint": "VAE Encode (for Inpainting)",
+    "VAEEncodeTiled": "VAE Encode (Tiled)",
+    "VAELoader": "Charger VAE",
+    "unCLIPCheckpointLoader": "Charger point de contrôle unCLIP",
+    "unCLIPConditioning": "Conditionnement unCLIP"
+  }
+}

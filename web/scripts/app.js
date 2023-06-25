@@ -931,7 +931,8 @@ export class ComfyApp {
 		});
 
 		api.addEventListener("reconnecting", () => {
-			this.ui.dialog.show("Reconnecting...");
+			const message = this.ui.translations.actions.reconnecting;
+			this.ui.dialog.show(message ? `${message}...` : "Reconnecting...");
 		});
 
 		api.addEventListener("reconnected", () => {

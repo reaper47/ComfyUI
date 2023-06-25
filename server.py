@@ -1,4 +1,5 @@
 import os
+import pathlib
 import sys
 import asyncio
 import nodes
@@ -124,6 +125,11 @@ class PromptServer():
         async def get_extensions(request):
             files = glob.glob(os.path.join(self.web_root, 'extensions/**/*.js'), recursive=True)
             return web.json_response(list(map(lambda f: "/" + os.path.relpath(f, self.web_root).replace("\\", "/"), files)))
+
+        @routes.get("/locales")
+        async def get_locales(request):
+            locales = glob.glob(os.path.join(self.web_root, "locales/*.json"))
+            return web.json_response([pathlib.Path(f).stem for f in locales])
 
         def get_dir_by_type(dir_type):
             if dir_type is None:

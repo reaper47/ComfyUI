@@ -15,6 +15,7 @@ app.registerExtension({
                 step: 0.01,
             },
             defaultValue: 0.05,
+            i18nKey: "extensions.core.editAttention.delta"
         });
 
         function incrementWeight(weight, delta) {
