@@ -92,7 +92,7 @@ class ManageTemplates extends ComfyDialog {
 							[
 								$el("input", {
 									value: t.name,
-									dataset: { name: t.name },
+									dataset: {name: t.name},
 									$: (el) => (nameInput = el),
 								}),
 							]
@@ -119,7 +119,7 @@ class ManageTemplates extends ComfyDialog {
 
 app.registerExtension({
 	name: id,
-	setup() {
+	setup(comfyApp) {
 		const manage = new ManageTemplates();
 
 		const clipboardAction = (cb) => {
@@ -178,6 +178,10 @@ app.registerExtension({
 				});
 			}
 
+			Object.values(options).filter(o => o?.content !== undefined).forEach(o => {
+				const translation = comfyApp.ui.translations.contextMenu[o.content];
+				o.content = translation ? translation : o.content;
+			});
 			return options;
 		};
 	},

@@ -307,7 +307,7 @@ dialog::backdrop {
 
 #comfy-settings-dialog {
 	padding: 0;
-	width: 41rem;
+	max-width: 41rem;
 }
 
 #comfy-settings-dialog tr > td:first-child {

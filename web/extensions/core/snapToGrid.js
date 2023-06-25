@@ -14,9 +14,9 @@ app.registerExtension({
 				min: 1,
 				max: 500,
 			},
-			tooltip:
-				"When dragging and resizing nodes while holding shift they will be aligned to the grid, this controls the size of that grid.",
+			tooltip: "When dragging and resizing nodes while holding shift they will be aligned to the grid, this controls the size of that grid.",
 			defaultValue: LiteGraph.CANVAS_GRID_SIZE,
+			i18nKey:"extensions.core.snapToGrid.gridSize",
 			onChange(value) {
 				LiteGraph.CANVAS_GRID_SIZE = +value;
 			},

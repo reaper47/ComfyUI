@@ -1,0 +1,178 @@
+{
+  "actions": {
+    "clear": "Clear",
+    "close": "Close",
+    "delete": "Delete",
+    "export": "Export",
+    "import": "Import",
+    "load": "Load",
+    "reconnecting": "Reconnecting",
+    "refresh": "Refresh",
+    "save": "Save",
+    "template": "Template"
+  },
+  "contextMenu": {
+    "Add Group": "Add Group",
+    "Add Node": "Add Node",
+    "Save Selected as Template": "Save selected as Template"
+  },
+  "dialogs": {
+    "settings": {
+      "title": "Settings"
+    }
+  },
+  "extensions": {
+    "core": {
+      "colorPalette": {
+        "label": "Color palette"
+      },
+      "confirmClear": {
+        "label": "Require confirmation when clearing workflow"
+      },
+      "editAttention": {
+        "delta": {
+          "label": "Ctrl+up/down precision"
+        }
+      },
+      "i18n": {
+        "label": "Language"
+      },
+      "invertMenuScrolling": {
+        "label": "Invert Menu Scrolling"
+      },
+      "menuPosition": {
+        "label": "Save menu position"
+      },
+      "nodeSuggestions": {
+        "number": {
+          "label": "Number of nodes suggestions"
+        }
+      },
+      "previewFormat": {
+        "label": "When displaying a preview in the image widget, convert it to a lightweight image, e.g. webp, jpeg, webp;50, etc."
+      },
+      "promptFilename": {
+        "label": "Prompt for filename when saving workflow"
+      },
+      "snapToGrid": {
+        "gridSize": {
+          "label": "Grid size",
+          "tooltip": "When dragging and resizing nodes while holding shift they will be aligned to the grid, this controls the size of that grid."
+        }
+      }
+    }
+  },
+  "mainMenu": {
+    "clipspace": {
+      "label": "Clipspace"
+    },
+    "extraOptions": {
+      "label": "Extra options",
+      "autoQueue": {
+        "tooltip": "Automatically queue prompt when the queue size hits 0"
+      },
+      "batchCount": "Batch count"
+    },
+    "history": {
+      "clear": "Clear history",
+      "history": "History",
+      "view": "View History"
+    },
+    "loadDefault": {
+      "label": "Load Default"
+    },
+    "queue": {
+      "clear": "Clear queue",
+      "front": "Queue Front",
+      "running": "Running",
+      "pending": "Pending",
+      "prompt": "Queue Prompt",
+      "view": "View Queue"
+    }
+  },
+  "nodes": {
+    "categories": {
+      "_for_testing": "_for_testing",
+      "advanced": "advanced",
+      "conditioning": "conditioning",
+      "image": "image",
+      "latent": "latent",
+      "loaders": "loaders",
+      "mask": "mask",
+      "sampling": "sampling",
+      "utils": "utils"
+    },
+    "CLIPLoader": "Load CLIP",
+    "CLIPSetLastLayer": "CLIP Set Last Layer",
+    "CLIPTextEncode": "CLIP Text Encode (Prompt)",
+    "CLIPVisionEncode": "CLIP Vision Encode",
+    "CLIPVisionLoader": "Load CLIP Vision",
+    "CheckpointLoader": "Load Checkpoint (With Config)",
+    "CheckpointLoaderSimple": "Load Checkpoint",
+    "ConditioningAverage ": "Conditioning (Average)",
+    "ConditioningCombine": "Conditioning (Combine)",
+    "ConditioningSetArea": "Conditioning (Set Area)",
+    "ConditioningSetMask": "Conditioning (Set Mask)",
+    "ControlNetApply": "Apply ControlNet",
+    "ControlNetLoader": "Load ControlNet Model",
+    "CropMask": "CropMask",
+    "DiffControlNetLoader": "Load ControlNet Model (diff)",
+    "DiffusersLoader": "DiffusersLoader",
+    "EmptyLatentImage": "Empty Latent Image",
+    "FeatherMask": "FeatherMask",
+    "GLIGENLoader": "GLIGENLoader",
+    "GLIGENTextBoxApply": "GLIGENTextBoxApply",
+    "HypernetworkLoader": "HypernetworkLoader",
+    "ImageBlend": "ImageBlend",
+    "ImageBlur": "ImageBlur",
+    "ImageInvert": "Invert Image",
+    "ImagePadForOutpaint": "Pad Image for Outpainting",
+    "ImageQuantize": "ImageQuantize",
+    "ImageScale": "Upscale Image",
+    "ImageScaleBy": "Upscale Image By",
+    "ImageSharpen": "ImageSharpen",
+    "ImageToMask": "Convert Image to Mask",
+    "ImageUpscaleWithModel": "Upscale Image (using Model)",
+    "InvertMask": "InvertMask",
+    "KSampler": "KSampler",
+    "KSamplerAdvanced": "KSampler (Advanced)",
+    "LatentComposite": "Latent Composite",
+    "LatentCompositeMasked": "LatentCompositeMasked",
+    "LatentCrop": "Crop Latent",
+    "LatentFlip": "Flip Latent",
+    "LatentFromBatch": "Latent From Batch",
+    "LatentRotate": "Rotate Latent",
+    "LatentUpscale": "Upscale Latent",
+    "LatentUpscaleBy": "Upscale Latent By",
+    "LoadImage": "Load Image",
+    "LoadImageMask": "Load Image (as Mask)",
+    "LoadLatent": "LoadLatent",
+    "LoraLoader": "Load LoRA",
+    "MaskComposite": "MaskComposite",
+    "MaskToImage": "Convert Mask to Image",
+    "ModelMergeBlocks": "ModelMergeBlocks",
+    "ModelMergeSimple": "ModelMergeSimple",
+    "NoteNode": "Note",
+    "PreviewImage": "Preview Image",
+    "PrimitiveNode": "Primitive",
+    "RebatchLatents": "Rebatch Latents",
+    "RepeatLatentBatch": "Repeat Latent Batch",
+    "RerouteNode": "Reroute",
+    "SaveImage": "Save Image",
+    "SaveLatent": "SaveLatent",
+    "SetLatentNoiseMask": "Set Latent Noise Mask",
+    "SolidMask": "SolidMask",
+    "StyleModelApply": "Apply Style Model",
+    "StyleModelLoader": "Load Style Model",
+    "TomePatchModel": "TomePatchModel",
+    "UpscaleModelLoader": "Load Upscale Model",
+    "VAEDecode": "VAE Decode",
+    "VAEDecodeTiled": "VAE Decode (Tiled)",
+    "VAEEncode": "VAE Encode",
+    "VAEEncodeForInpaint": "VAE Encode (for Inpainting)",
+    "VAEEncodeTiled": "VAE Encode (Tiled)",
+    "VAELoader": "Load VAE",
+    "unCLIPCheckpointLoader": "unCLIPCheckpointLoader",
+    "unCLIPConditioning": "unCLIPConditioning"
+  }
+}

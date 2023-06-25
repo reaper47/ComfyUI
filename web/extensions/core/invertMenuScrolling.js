@@ -24,6 +24,7 @@ app.registerExtension({
 			name: "Invert Menu Scrolling",
 			type: "boolean",
 			defaultValue: false,
+			i18nKey: "extensions.core.invertMenuScrolling",
 			onChange(value) {
 				if (value) {
 					replace();

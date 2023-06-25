@@ -184,7 +184,7 @@ const els = {}
 // const ctxMenu = LiteGraph.ContextMenu;
 app.registerExtension({
 	name: id,
-	addCustomNodeDefs(node_defs) {
+	addCustomNodeDefs(node_defs, comfyApp) {
 		const sortObjectKeys = (unordered) => {
 			return Object.keys(unordered).sort().reduce((obj, key) => {
 				obj[key] = unordered[key];
@@ -264,11 +264,11 @@ app.registerExtension({
 		};
 
 		const getCustomColorPalettes = () => {
-			return app.ui.settings.getSettingValue(idCustomColorPalettes, {});
+			return comfyApp.ui.settings.getSettingValue(idCustomColorPalettes, {});
 		};
 
 		const setCustomColorPalettes = (customColorPalettes) => {
-			return app.ui.settings.setSettingValue(idCustomColorPalettes, customColorPalettes);
+			return comfyApp.ui.settings.setSettingValue(idCustomColorPalettes, customColorPalettes);
 		};
 
 		const addCustomColorPalette = async (colorPalette) => {
@@ -369,7 +369,7 @@ app.registerExtension({
 
 		const getColorPalette = (colorPaletteId) => {
 			if (!colorPaletteId) {
-				colorPaletteId = app.ui.settings.getSettingValue(id, defaultColorPaletteId);
+				colorPaletteId = comfyApp.ui.settings.getSettingValue(id, defaultColorPaletteId);
 			}
 
 			if (colorPaletteId.startsWith("custom_")) {
@@ -384,7 +384,7 @@ app.registerExtension({
 		};
 
 		const setColorPalette = (colorPaletteId) => {
-			app.ui.settings.setSettingValue(id, colorPaletteId);
+			comfyApp.ui.settings.setSettingValue(id, colorPaletteId);
 		};
 
 		const fileInput = $el("input", {
@@ -404,21 +404,21 @@ app.registerExtension({
 			},
 		});
 
-		app.ui.settings.addSetting({
+		comfyApp.ui.settings.addSetting({
 			id,
 			name: "Color Palette",
 			type: (name, setter, value) => {
 				const options = [
-					...Object.values(colorPalettes).map(c=> $el("option", {
+					...Object.values(colorPalettes).map(c => $el("option", {
 						textContent: c.name,
 						value: c.id,
-						selected: c.id === value
+						selected: c.id === value,
 					})),
-					...Object.values(getCustomColorPalettes()).map(c=>$el("option", {
+					...Object.values(getCustomColorPalettes()).map(c => $el("option", {
 						textContent: `${c.name} (custom)`,
 						value: `custom_${c.id}`,
 						selected: `custom_${c.id}` === value
-					}))	,
+					})),
 				];
 
 				els.select = $el("select", {
@@ -435,7 +435,8 @@ app.registerExtension({
 					$el("td", [
 						$el("label", {
 							for: id.replaceAll(".", "-"),
-							textContent: "Color palette",
+							textContent: comfyApp.ui.translations.extensions.core.colorPalette.label,
+							"data-i18n-key": "extensions.core.colorPalette.label",
 						}),
 					]),
 					$el("td", [
@@ -449,9 +450,10 @@ app.registerExtension({
 						}, [
 							$el("input", {
 								type: "button",
-								value: "Export",
+								value: comfyApp.ui.translations.actions.export,
+								"data-i18n-key": 'actions.export',
 								onclick: async () => {
-									const colorPaletteId = app.ui.settings.getSettingValue(id, defaultColorPaletteId);
+									const colorPaletteId = comfyApp.ui.settings.getSettingValue(id, defaultColorPaletteId);
 									const colorPalette = await completeColorPalette(getColorPalette(colorPaletteId));
 									const json = JSON.stringify(colorPalette, null, 2); // convert the data to a JSON string
 									const blob = new Blob([json], {type: "application/json"});
@@ -471,14 +473,16 @@ app.registerExtension({
 							}),
 							$el("input", {
 								type: "button",
-								value: "Import",
+								value: comfyApp.ui.translations.actions.import,
+								"data-i18n-key": 'actions.import',
 								onclick: () => {
 									fileInput.click();
 								}
 							}),
 							$el("input", {
 								type: "button",
-								value: "Template",
+								value: comfyApp.ui.translations.actions.template,
+								"data-i18n-key": 'actions.template',
 								onclick: async () => {
 									const colorPalette = await getColorPaletteTemplate();
 									const json = JSON.stringify(colorPalette, null, 2); // convert the data to a JSON string
@@ -499,9 +503,10 @@ app.registerExtension({
 							}),
 							$el("input", {
 								type: "button",
-								value: "Delete",
+								value: comfyApp.ui.translations.actions.delete,
+								"data-i18n-key": 'actions.delete',
 								onclick: async () => {
-									let colorPaletteId = app.ui.settings.getSettingValue(id, defaultColorPaletteId);
+									let colorPaletteId = comfyApp.settings.getSettingValue(id, defaultColorPaletteId);
 
 									if (colorPalettes[colorPaletteId]) {
 										alert("You cannot delete a built-in color palette.");
