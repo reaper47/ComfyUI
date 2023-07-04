@@ -39,19 +39,6 @@ app.registerExtension({
 				return;
 			}
 
-			// Close out of modals using escape
-			if (event.key === "Escape") {
-				const modals = document.querySelectorAll(".comfy-modal");
-				const modal = Array.from(modals).find(modal => window.getComputedStyle(modal).getPropertyValue("display") !== "none");
-				if (modal) {
-					modal.style.display = "none";
-				}
-
-				[...document.querySelectorAll("dialog")].forEach(d => {
-					d.close();
-				});
-			}
-
 			const keyIdMap = {
 				q: "#comfy-view-queue-button",
 				h: "#comfy-view-history-button",

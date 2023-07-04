@@ -1,18 +1,18 @@
-import { app } from "/scripts/app.js";
-import { ComfyDialog, $el } from "/scripts/ui.js";
+import {app} from "/scripts/app.js";
+import {ComfyDialog, $el} from "/scripts/ui.js";
 
 // Adds the ability to save and add multiple nodes as a template
 // To save:
 // Select multiple nodes (ctrl + drag to select a region or ctrl+click individual nodes)
-// Right click the canvas
+// Right-click the canvas
 // Save Node Template -> give it a name
 //
 // To add:
-// Right click the canvas
+// Right-click the canvas
 // Node templates -> click the one to add
 //
 // To delete/rename:
-// Right click the canvas
+// Right-click the canvas
 // Node templates -> Manage
 
 const id = "Comfy.NodeTemplates";
@@ -25,25 +25,30 @@ class ManageTemplates extends ComfyDialog {
 	}
 
 	createButtons() {
-		const btns = super.createButtons();
-		btns[0].textContent = "Cancel";
-		btns.unshift(
+		const buttons = super.createButtons();
+		buttons[0].textContent = "Cancel";
+		buttons.push(
 			$el("button", {
 				type: "button",
 				textContent: "Save",
 				onclick: () => this.save(),
 			})
 		);
-		return btns;
+		return [$el("div", {
+			style: {
+				display: "grid",
+				gridAutoFlow: "column",
+				gap: "0.5rem",
+			},
+		}, buttons)];
 	}
 
 	load() {
 		const templates = localStorage.getItem(id);
 		if (templates) {
 			return JSON.parse(templates);
-		} else {
-			return [];
 		}
+		return [];
 	}
 
 	save() {
@@ -51,14 +56,11 @@ class ManageTemplates extends ComfyDialog {
 		const inputs = this.element.querySelectorAll("input");
 		const updated = [];
 
-		for (let i = 0; i < inputs.length; i++) {
-			const input = inputs[i];
-			if (input.parentElement.style.display !== "none") {
-				const t = this.templates[i];
-				t.name = input.value.trim() || input.getAttribute("data-name");
-				updated.push(t);
-			}
-		}
+		inputs.forEach((input, i) => {
+			const t = this.templates[i];
+			t.name = input.value.trim() || input.getAttribute("data-name");
+			updated.push(t);
+		});
 
 		this.templates = updated;
 		this.store();
@@ -71,48 +73,47 @@ class ManageTemplates extends ComfyDialog {
 
 	show() {
 		// Show list of template names + delete button
-		super.show(
-			$el(
-				"div",
-				{
-					style: {
-						display: "grid",
-						gridTemplateColumns: "1fr auto",
-						gap: "5px",
-					},
-				},
-				this.templates.flatMap((t) => {
+		this.element.style.padding = 0;
+		const contentDiv = this.element.querySelector(".comfy-modal-content");
+		contentDiv.classList.add("comfy-table");
+
+		super.show([
+				$el("thead", [
+					$el("tr", [
+						$el("th", {textContent: "Name"}),
+						$el("th"),
+					]),
+				]),
+				$el("tbody", this.templates.flatMap((t) => {
 					let nameInput;
 					return [
-						$el(
-							"label",
-							{
-								textContent: "Name: ",
-							},
-							[
+						$el("tr", [
+							$el("td", [
 								$el("input", {
 									value: t.name,
-									dataset: { name: t.name },
+									dataset: {name: t.name},
 									$: (el) => (nameInput = el),
+								})
+							]),
+							$el("td", [
+								$el("button", {
+									textContent: "Delete",
+									style: {
+										color: "var(--error-text)",
+									},
+									onclick: (event) => {
+										let {target} = event;
+										while (target.tagName !== "TR") {
+											target = target.parentElement;
+										}
+										target.remove();
+									},
 								}),
-							]
-						),
-						$el("button", {
-							textContent: "Delete",
-							style: {
-								fontSize: "12px",
-								color: "red",
-								fontWeight: "normal",
-							},
-							onclick: (e) => {
-								nameInput.value = "";
-								e.target.style.display = "none";
-								e.target.previousElementSibling.style.display = "none";
-							},
-						}),
+							]),
+						]),
 					];
-				})
-			)
+				}))
+			]
 		);
 	}
 }
@@ -123,7 +124,7 @@ app.registerExtension({
 		const manage = new ManageTemplates();
 
 		const clipboardAction = (cb) => {
-			// We use the clipboard functions but dont want to overwrite the current user clipboard
+			// We use the clipboard functions but don't want to overwrite the current user clipboard
 			// Restore it after we've run our callback
 			const old = localStorage.getItem("litegrapheditor_clipboard");
 			cb();
@@ -136,7 +137,7 @@ app.registerExtension({
 
 			options.push(null);
 			options.push({
-				content: `Save Selected as Template`,
+				content: "Save Selected as Template",
 				disabled: !Object.keys(app.canvas.selected_nodes || {}).length,
 				callback: () => {
 					const name = prompt("Enter name");
