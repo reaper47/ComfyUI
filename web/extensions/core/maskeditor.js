@@ -6,46 +6,45 @@ import { ClipspaceDialog } from "./clipspace.js";
 
 // Helper function to convert a data URL to a Blob object
 function dataURLToBlob(dataURL) {
-	const parts = dataURL.split(';base64,');
-	const contentType = parts[0].split(':')[1];
+	const parts = dataURL.split(";base64,");
+	const contentType = parts[0].split(":")[1];
 	const byteString = atob(parts[1]);
 	const arrayBuffer = new ArrayBuffer(byteString.length);
 	const uint8Array = new Uint8Array(arrayBuffer);
 	for (let i = 0; i < byteString.length; i++) {
 		uint8Array[i] = byteString.charCodeAt(i);
 	}
-	return new Blob([arrayBuffer], { type: contentType });
+	return new Blob([arrayBuffer], {type: contentType});
 }
 
 function loadedImageToBlob(image) {
-	const canvas = document.createElement('canvas');
+	const canvas = document.createElement("canvas");
 
 	canvas.width = image.width;
 	canvas.height = image.height;
 
-	const ctx = canvas.getContext('2d');
+	const ctx = canvas.getContext("2d");
 
 	ctx.drawImage(image, 0, 0);
 
-	const dataURL = canvas.toDataURL('image/png', 1);
-	const blob = dataURLToBlob(dataURL);
-
-	return blob;
+	const dataURL = canvas.toDataURL("image/png", 1);
+	return dataURLToBlob(dataURL);
 }
 
 async function uploadMask(filepath, formData) {
 	await api.fetchApi('/upload/mask', {
 		method: 'POST',
 		body: formData
-	}).then(response => {}).catch(error => {
-		console.error('Error:', error);
+	}).catch(error => {
+		console.error("Error:", error);
 	});
 
 	ComfyApp.clipspace.imgs[ComfyApp.clipspace['selectedIndex']] = new Image();
 	ComfyApp.clipspace.imgs[ComfyApp.clipspace['selectedIndex']].src = api.apiURL("/view?" + new URLSearchParams(filepath).toString() + app.getPreviewFormatParam());
 
-	if(ComfyApp.clipspace.images)
-		ComfyApp.clipspace.images[ComfyApp.clipspace['selectedIndex']] = filepath;
+	if (ComfyApp.clipspace.images) {
+		ComfyApp.clipspace.images[ComfyApp.clipspace["selectedIndex"]] = filepath;
+	}
 
 	ClipspaceDialog.invalidatePreview();
 }
@@ -57,583 +56,586 @@ function prepareRGB(image, backupCanvas, backupCtx) {
 
 	// refine mask image
 	for (let i = 0; i < backupData.data.length; i += 4) {
-		if(backupData.data[i+3] == 255)
-			backupData.data[i+3] = 0;
-		else
-			backupData.data[i+3] = 255;
+		if (backupData.data[i + 3] === 255) {
+			backupData.data[i + 3] = 0;
+			continue
+		}
 
+		backupData.data[i + 3] = 255;
 		backupData.data[i] = 0;
-		backupData.data[i+1] = 0;
-		backupData.data[i+2] = 0;
+		backupData.data[i + 1] = 0;
+		backupData.data[i + 2] = 0;
 	}
 
-	backupCtx.globalCompositeOperation = 'source-over';
+	backupCtx.globalCompositeOperation = "source-over";
 	backupCtx.putImageData(backupData, 0, 0);
 }
 
 class MaskEditorDialog extends ComfyDialog {
-	static instance = null;
+	#isDrawingMode = false;
+	#isLayoutCreated = false;
 
-	static getInstance() {
-		if(!MaskEditorDialog.instance) {
-			MaskEditorDialog.instance = new MaskEditorDialog(app);
-		}
+	#brush = {
+		slider: null,
+		max: 100,
+		min: 1,
+		size: 10,
+	};
 
-		return MaskEditorDialog.instance;
-	}
+	#canvases = {
+		image: $el("canvas", {
+			id: "imageCanvas",
+			style: {
+				left: "0",
+				position: "relative"
+			},
+		}),
+		backup: $el("canvas", {id: "backupCanvas"}),
+		brush: $el("canvas", {
+			id: "brushCanvas",
+			style: {
+				position: "absolute",
+			},
+		}),
+		mask: $el("canvas", {
+			id: "maskCanvas",
+			style: {
+				position: "absolute",
+			},
+		}),
+	};
 
-	is_layout_created =  false;
+	#last = {
+		x: -1,
+		y: -1,
+		mousePosition: {
+			clientX: 0,
+			clientY: 0,
+		},
+		pressure: 1,
+		time: 0,
+	};
 
 	constructor() {
 		super();
-		this.element = $el("div.comfy-modal", { parent: document.body }, 
-			[ $el("div.comfy-modal-content", 
-				[...this.createButtons()]),
-			]);
+		this.element = $el("dialog", {parent: document.body}, [...this.createButtons()]);
 	}
 
 	createButtons() {
 		return [];
 	}
 
-	createButton(name, callback) {
-		var button = document.createElement("button");
-		button.innerText = name;
-		button.addEventListener("click", callback);
-		return button;
-	}
-
-	createLeftButton(name, callback) {
-		var button = this.createButton(name, callback);
-		button.style.cssFloat = "left";
-		button.style.marginRight = "4px";
-		return button;
-	}
-
-	createRightButton(name, callback) {
-		var button = this.createButton(name, callback);
-		button.style.cssFloat = "right";
-		button.style.marginLeft = "4px";
-		return button;
-	}
-
-	createLeftSlider(self, name, callback) {
-		const divElement = document.createElement('div');
-		divElement.id = "maskeditor-slider";
-		divElement.style.cssFloat = "left";
-		divElement.style.fontFamily = "sans-serif";
-		divElement.style.marginRight = "4px";
-		divElement.style.color = "var(--input-text)";
-		divElement.style.backgroundColor = "var(--comfy-input-bg)";
-		divElement.style.borderRadius = "8px";
-		divElement.style.borderColor = "var(--border-color)";
-		divElement.style.borderStyle = "solid";
-		divElement.style.fontSize = "15px";
-		divElement.style.height = "21px";
-		divElement.style.padding = "1px 6px";
-		divElement.style.display = "flex";
-		divElement.style.position = "relative";
-		divElement.style.top = "2px";
-		self.brush_slider_input = document.createElement('input');
-		self.brush_slider_input.setAttribute('type', 'range');
-		self.brush_slider_input.setAttribute('min', '1');
-		self.brush_slider_input.setAttribute('max', '100');
-		self.brush_slider_input.setAttribute('value', '10');
-		const labelElement = document.createElement("label");
-		labelElement.textContent = name;
-
-		divElement.appendChild(labelElement);
-		divElement.appendChild(self.brush_slider_input);
-
-		self.brush_slider_input.addEventListener("change", callback);
-
-		return divElement;
-	}
-
-	setlayout(imgCanvas, maskCanvas) {
-		const self = this;
-
-		// If it is specified as relative, using it only as a hidden placeholder for padding is recommended
-		// to prevent anomalies where it exceeds a certain size and goes outside of the window.
-		var placeholder = document.createElement("div");
-		placeholder.style.position = "relative";
-		placeholder.style.height = "50px";
-
-		var bottom_panel = document.createElement("div");
-		bottom_panel.style.position = "absolute";
-		bottom_panel.style.bottom = "0px";
-		bottom_panel.style.left = "20px";
-		bottom_panel.style.right = "20px";
-		bottom_panel.style.height = "50px";
-
-		var brush = document.createElement("div");
-		brush.id = "brush";
-		brush.style.backgroundColor = "transparent";
-		brush.style.outline = "1px dashed black";
-		brush.style.boxShadow = "0 0 0 1px white";
-		brush.style.borderRadius = "50%";
-		brush.style.MozBorderRadius = "50%";
-		brush.style.WebkitBorderRadius = "50%";
-		brush.style.position = "absolute";
-		brush.style.zIndex = 8889;
-		brush.style.pointerEvents = "none";
-		this.brush = brush;
-		this.element.appendChild(imgCanvas);
-		this.element.appendChild(maskCanvas);
-		this.element.appendChild(placeholder); // must below z-index than bottom_panel to avoid covering button
-		this.element.appendChild(bottom_panel);
-		document.body.appendChild(brush);
-
-		var brush_size_slider = this.createLeftSlider(self, "Thickness", (event) => {
-			self.brush_size = event.target.value;
-			self.updateBrushPreview(self, null, null);
-		});
-		var clearButton = this.createLeftButton("Clear",
-			() => {
-				self.maskCtx.clearRect(0, 0, self.maskCanvas.width, self.maskCanvas.height);
-				self.backupCtx.clearRect(0, 0, self.backupCanvas.width, self.backupCanvas.height);
-			});
-		var cancelButton = this.createRightButton("Cancel", () => {
-			document.removeEventListener("mouseup", MaskEditorDialog.handleMouseUp);
-			document.removeEventListener("keydown", MaskEditorDialog.handleKeyDown);
-			self.close();
-		});
-
-		this.saveButton = this.createRightButton("Save", () => {
-			document.removeEventListener("mouseup", MaskEditorDialog.handleMouseUp);
-			document.removeEventListener("keydown", MaskEditorDialog.handleKeyDown);
-				self.save();
-			});
-
-		this.element.appendChild(imgCanvas);
-		this.element.appendChild(maskCanvas);
-		this.element.appendChild(placeholder); // must below z-index than bottom_panel to avoid covering button
-		this.element.appendChild(bottom_panel);
-
-		bottom_panel.appendChild(clearButton);
-		bottom_panel.appendChild(this.saveButton);
-		bottom_panel.appendChild(cancelButton);
-		bottom_panel.appendChild(brush_size_slider);
-
-		imgCanvas.style.position = "relative";
-		imgCanvas.style.top = "200";
-		imgCanvas.style.left = "0";
-
-		maskCanvas.style.position = "absolute";
-	}
-
 	show() {
-		if(!this.is_layout_created) {
-			// layout
-			const imgCanvas = document.createElement('canvas');
-			const maskCanvas = document.createElement('canvas');
-			const backupCanvas = document.createElement('canvas');
+		this.#setLayout();
+		this.setEventHandler(this.#canvases.brush);
 
-			imgCanvas.id = "imageCanvas";
-			maskCanvas.id = "maskCanvas";
-			backupCanvas.id = "backupCanvas";
+		const canvas = this.#canvases.mask
+		let ctx = canvas.getContext("2d");
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = "#000";
 
-			this.setlayout(imgCanvas, maskCanvas);
+		this.#setImages();
 
-			// prepare content
-			this.imgCanvas = imgCanvas;
-			this.maskCanvas = maskCanvas;
-			this.backupCanvas = backupCanvas;
-			this.maskCtx = maskCanvas.getContext('2d');
-			this.backupCtx = backupCanvas.getContext('2d');
-
-			this.setEventHandler(maskCanvas);
-
-			this.is_layout_created = true;
-
-			// replacement of onClose hook since close is not real close
-			const self = this;
-			const observer = new MutationObserver(function(mutations) {
-			mutations.forEach(function(mutation) {
-					if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-						if(self.last_display_style && self.last_display_style != 'none' && self.element.style.display == 'none') {
-							ComfyApp.onClipspaceEditorClosed();
-						}
-
-						self.last_display_style = self.element.style.display;
-					}
-				});
-			});
-
-			const config = { attributes: true };
-			observer.observe(this.element, config);
-		}
-
-		this.setImages(this.imgCanvas, this.backupCanvas);
-
-		if(ComfyApp.clipspace_return_node) {
+		if (ComfyApp.clipspace_return_node) {
 			this.saveButton.innerText = "Save to node";
-		}
-		else {
+		} else {
 			this.saveButton.innerText = "Save";
 		}
 		this.saveButton.disabled = false;
 
-		this.element.style.display = "block";
-		this.element.style.zIndex = 8888; // NOTE: alert dialog must be high priority.
+		this.element.style.visibility = "hidden";
+		this.element.showModal();
+
+		setTimeout(() => {
+			this.element.style.width = `${this.#canvases.mask.width}px`;
+			this.element.style.visibility = "visible";
+		}, 150)
 	}
 
-	isOpened() {
-		return this.element.style.display == "block";
+	#setLayout() {
+		const brushSizeSlider = this.createBrushSlider("Thickness", (event) => {
+			this.#brush.size = Number(event.target.value);
+		});
+
+		const clearButton = $el("button", {
+			textContent: "Clear",
+			onclick: () => {
+				const {backup, mask} = this.#canvases;
+				mask.getContext("2d").clearRect(0, 0, mask.width, mask.height);
+				backup.getContext("2d").clearRect(0, 0, backup.width, backup.height);
+			},
+			style: {
+				cssFloat: "left",
+				marginRight: "4px",
+			},
+		});
+
+		const cancelButton = $el("button", {
+			innerText: "Cancel",
+			onclick: () => {
+				document.removeEventListener("keydown", this.handleKeyDown.bind(this));
+				this.close();
+			},
+			style: {
+				cssFloat: "right",
+				marginLeft: "4px",
+			},
+		});
+
+		this.saveButton = $el("button", {
+			innerText: "Save",
+			onclick: () => {
+				document.removeEventListener("keydown", this.handleKeyDown.bind(this));
+				this.save().then();
+			},
+			style: {
+				cssFloat: "right",
+				marginLeft: "4px",
+			},
+		});
+
+		const bottom_panel = $el("div", [
+			$el("div", {
+				style: {
+					display: "grid",
+					cssFloat: "right",
+				},
+			}, [this.saveButton, cancelButton]),
+			$el("div", {
+				style: {
+					display: "grid",
+					gap: "0.5rem",
+					cssFloat: "left",
+				},
+			}, [brushSizeSlider, clearButton])
+		])
+
+		this.element.appendChild(this.#canvases.image);
+		this.element.appendChild(this.#canvases.mask);
+		this.element.appendChild(this.#canvases.brush);
+		this.element.appendChild(bottom_panel);
+
+		this.#isLayoutCreated = true;
 	}
 
-	setImages(imgCanvas, backupCanvas) {
-		const imgCtx = imgCanvas.getContext('2d');
-		const backupCtx = backupCanvas.getContext('2d');
-		const maskCtx = this.maskCtx;
-		const maskCanvas = this.maskCanvas;
+	createBrushSlider(name, callback) {
+		this.#brush.slider = $el("input", {
+			type: "range",
+			min: 1,
+			max: 100,
+			value: 10,
+			onchange: callback,
+		});
 
-		backupCtx.clearRect(0,0,this.backupCanvas.width,this.backupCanvas.height);
-		imgCtx.clearRect(0,0,this.imgCanvas.width,this.imgCanvas.height);
-		maskCtx.clearRect(0,0,this.maskCanvas.width,this.maskCanvas.height);
+		return $el("div.comfy-mask-editor-slider", {id: "maskeditor-slider"}, [
+			$el("label", {textContent: name}),
+			this.#brush.slider,
+		]);
+	}
+
+	#setImages() {
+		const {backup, brush, image, mask} = this.#canvases;
+
+		const imgCtx = image.getContext("2d");
+		const backupCtx = backup.getContext("2d");
+		const maskCtx = mask.getContext("2d");
+
+		backupCtx.clearRect(0, 0, backup.width, backup.height);
+		imgCtx.clearRect(0, 0, image.width, image.height);
+		maskCtx.clearRect(0, 0, mask.width, mask.height);
 
 		// image load
 		const orig_image = new Image();
 		window.addEventListener("resize", () => {
 			// repositioning
-			imgCanvas.width = window.innerWidth - 250;
-			imgCanvas.height = window.innerHeight - 200;
+			image.width = window.innerWidth - 250;
+			image.height = window.innerHeight - 200;
 
 			// redraw image
 			let drawWidth = orig_image.width;
 			let drawHeight = orig_image.height;
-			if (orig_image.width > imgCanvas.width) {
-				drawWidth = imgCanvas.width;
+			if (orig_image.width > image.width) {
+				drawWidth = image.width;
 				drawHeight = (drawWidth / orig_image.width) * orig_image.height;
 			}
 
-			if (drawHeight > imgCanvas.height) {
-				drawHeight = imgCanvas.height;
+			if (drawHeight > image.height) {
+				drawHeight = image.height;
 				drawWidth = (drawHeight / orig_image.height) * orig_image.width;
 			}
+
+			image.height = drawHeight;
+			this.element.style.width = `${drawWidth}px`;
 
 			imgCtx.drawImage(orig_image, 0, 0, drawWidth, drawHeight);
 
 			// update mask
-			maskCanvas.width = drawWidth;
-			maskCanvas.height = drawHeight;
-			maskCanvas.style.top = imgCanvas.offsetTop + "px";
-			maskCanvas.style.left = imgCanvas.offsetLeft + "px";
-			backupCtx.drawImage(maskCanvas, 0, 0, maskCanvas.width, maskCanvas.height, 0, 0, backupCanvas.width, backupCanvas.height);
-			maskCtx.drawImage(backupCanvas, 0, 0, backupCanvas.width, backupCanvas.height, 0, 0, maskCanvas.width, maskCanvas.height);
-		});
+			mask.width = drawWidth;
+			mask.height = drawHeight;
+			mask.style.top = image.offsetTop + "px";
+			mask.style.left = image.offsetLeft + "px";
 
-		const filepath = ComfyApp.clipspace.images;
+			backupCtx.drawImage(mask, 0, 0, mask.width, mask.height, 0, 0, backup.width, backup.height);
+			maskCtx.drawImage(backup, 0, 0, backup.width, backup.height, 0, 0, mask.width, mask.height);
+
+			brush.width = drawWidth;
+			brush.height = drawHeight;
+			brush.style.left = image.offsetLeft + "px";
+			brush.style.top = image.offsetTop + "px";
+		});
 
 		const touched_image = new Image();
 
-		touched_image.onload = function() {
-			backupCanvas.width = touched_image.width;
-			backupCanvas.height = touched_image.height;
+		touched_image.onload = function () {
+			backup.width = touched_image.width;
+			backup.height = touched_image.height;
 
-			prepareRGB(touched_image, backupCanvas, backupCtx);
+			prepareRGB(touched_image, backup, backupCtx);
 		};
 
-		const alpha_url = new URL(ComfyApp.clipspace.imgs[ComfyApp.clipspace['selectedIndex']].src)
-		alpha_url.searchParams.delete('channel');
-		alpha_url.searchParams.delete('preview');
-		alpha_url.searchParams.set('channel', 'a');
-		touched_image.src = alpha_url;
+		const alpha_url = new URL(ComfyApp.clipspace.imgs[ComfyApp.clipspace["selectedIndex"]].src)
+		alpha_url.searchParams.delete("channel");
+		alpha_url.searchParams.delete("preview");
+		alpha_url.searchParams.set("channel", "a");
+		touched_image.src = alpha_url.toString();
 
 		// original image load
-		orig_image.onload = function() {
-			window.dispatchEvent(new Event('resize'));
+		orig_image.onload = function () {
+			window.dispatchEvent(new Event("resize"));
 		};
 
-		const rgb_url = new URL(ComfyApp.clipspace.imgs[ComfyApp.clipspace['selectedIndex']].src);
-		rgb_url.searchParams.delete('channel');
-		rgb_url.searchParams.set('channel', 'rgb');
-		orig_image.src = rgb_url;
+		const rgb_url = new URL(ComfyApp.clipspace.imgs[ComfyApp.clipspace["selectedIndex"]].src);
+		rgb_url.searchParams.delete("channel");
+		rgb_url.searchParams.set("channel", "rgb");
+		orig_image.src = rgb_url.toString();
 		this.image = orig_image;
 	}
 
-	setEventHandler(maskCanvas) {
-		maskCanvas.addEventListener("contextmenu", (event) => {
+	setEventHandler(brushCanvas) {
+		brushCanvas.addEventListener("contextmenu", (event) => {
 			event.preventDefault();
 		});
 
-		const self = this;
-		maskCanvas.addEventListener('wheel', (event) => this.handleWheelEvent(self,event));
-		maskCanvas.addEventListener('pointerdown', (event) => this.handlePointerDown(self,event));
-		document.addEventListener('pointerup', MaskEditorDialog.handlePointerUp);
-		maskCanvas.addEventListener('pointermove', (event) => this.draw_move(self,event));
-		maskCanvas.addEventListener('touchmove', (event) => this.draw_move(self,event));
-		maskCanvas.addEventListener('pointerover', (event) => { this.brush.style.display = "block"; });
-		maskCanvas.addEventListener('pointerleave', (event) => { this.brush.style.display = "none"; });
-		document.addEventListener('keydown', MaskEditorDialog.handleKeyDown);
+		brushCanvas.addEventListener("wheel", this.#handleWheelEvent.bind(this));
+		brushCanvas.addEventListener("mousedown", this.#handleMouseDown.bind(this));
+		brushCanvas.addEventListener("mousemove", this.#handleMouseMove.bind(this));
+		brushCanvas.addEventListener("mouseout", this.#handleMouseOut.bind(this));
+		brushCanvas.addEventListener("mouseup", this.#handleMouseUp.bind(this));
+		document.addEventListener("pointerup", this.handlePointerUp.bind(this));
+		brushCanvas.addEventListener("pointerdown", this.#handlePointerDown.bind(this));
+		brushCanvas.addEventListener("pointermove", this.#drawMove.bind(this));
+		brushCanvas.addEventListener("touchmove", this.#drawMove.bind(this));
+		document.addEventListener("keydown", this.handleKeyDown.bind(this));
 	}
 
-	brush_size = 10;
-	drawing_mode = false;
-	lastx = -1;
-	lasty = -1;
-	lasttime = 0;
-
-	static handleKeyDown(event) {
-		const self = MaskEditorDialog.instance;
-		if (event.key === ']') {
-			self.brush_size = Math.min(self.brush_size+2, 100);
-		} else if (event.key === '[') {
-			self.brush_size = Math.max(self.brush_size-2, 1);
-		} else if(event.key === 'Enter') {
-			self.save();
+	#handleWheelEvent(event) {
+		if (event.deltaY < 0) {
+			this.#brush.size = Math.min(this.#brush.size + 2, 100);
+		} else {
+			this.#brush.size = Math.max(this.#brush.size - 2, 1);
 		}
 
-		self.updateBrushPreview(self);
+		this.#brush.slider.value = this.#brush.size;
+		this.updateBrushPreview(event);
 	}
 
-	static handlePointerUp(event) {
+	handleKeyDown(event) {
+		switch (event.code) {
+			case "BracketRight":
+				this.#brush.size = Math.min(this.#brush.size + 2, this.#brush.max);
+				break;
+			case "BracketLeft":
+				this.#brush.size = Math.max(this.#brush.size - 2, this.#brush.min);
+				break;
+			case "Enter":
+				this.save().then();
+				break;
+			default:
+				break;
+		}
+
+		this.#brush.slider.value = this.#brush.size;
+		this.updateBrushPreview(this.#last.mousePosition);
+	}
+
+	updateBrushPreview(event) {
+		const rect = this.#canvases.brush.getBoundingClientRect();
+		const x = event.clientX - rect.left;
+		const y = event.clientY - rect.top;
+
+		const canvas = this.#canvases.brush;
+		const ctx = canvas.getContext("2d");
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.beginPath();
+		ctx.setLineDash([5, 15]);
+		ctx.strokeStyle = "white";
+		ctx.lineWidth = 1.5;
+		ctx.arc(x, y, this.#brush.size, 0, Math.PI * 2, false);
+		ctx.stroke();
+	}
+
+	#drawMove(event) {
 		event.preventDefault();
-		MaskEditorDialog.instance.drawing_mode = false;
-	}
 
-	updateBrushPreview(self) {
-		const brush = self.brush;
+		this.updateBrushPreview(event);
 
-		var centerX = self.cursorX;
-		var centerY = self.cursorY;
+		const maskCtx = this.#canvases.mask.getContext("2d");
+		let diff = performance.now() - this.#last.time;
+		if (window.TouchEvent && event instanceof TouchEvent || event.buttons === 1) {
+			const maskRect = this.#canvases.mask.getBoundingClientRect();
 
-		brush.style.width = self.brush_size * 2 + "px";
-		brush.style.height = self.brush_size * 2 + "px";
-		brush.style.left = (centerX - self.brush_size) + "px";
-		brush.style.top = (centerY - self.brush_size) + "px";
-	}
+			let x = event.offsetX;
+			let y = event.offsetY;
 
-	handleWheelEvent(self, event) {
-		if(event.deltaY < 0)
-			self.brush_size = Math.min(self.brush_size+2, 100);
-		else
-			self.brush_size = Math.max(self.brush_size-2, 1);
-
-		self.brush_slider_input.value = self.brush_size;
-
-		self.updateBrushPreview(self);
-	}
-
-	draw_move(self, event) {
-		event.preventDefault();
-
-		this.cursorX = event.pageX;
-		this.cursorY = event.pageY;
-
-		self.updateBrushPreview(self);
-
-		if (window.TouchEvent && event instanceof TouchEvent || event.buttons == 1) {
-			var diff = performance.now() - self.lasttime;
-
-			const maskRect = self.maskCanvas.getBoundingClientRect();
-
-			var x = event.offsetX;
-			var y = event.offsetY
-
-			if(event.offsetX == null) {
+			if (event.offsetX == null) {
 				x = event.targetTouches[0].clientX - maskRect.left;
 			}
 
-			if(event.offsetY == null) {
+			if (event.offsetY == null) {
 				y = event.targetTouches[0].clientY - maskRect.top;
 			}
 
-			var brush_size = this.brush_size;
-			if(event instanceof PointerEvent && event.pointerType == 'pen') {
+			let brush_size = this.#brush.size;
+			if (event instanceof PointerEvent && event.pointerType === "pen") {
 				brush_size *= event.pressure;
-				this.last_pressure = event.pressure;
-			}
-			else if(window.TouchEvent && event instanceof TouchEvent && diff < 20){
+				this.#last.pressure = event.pressure;
+			} else if (window.TouchEvent && event instanceof TouchEvent && diff < 20) {
 				// The firing interval of PointerEvents in Pen is unreliable, so it is supplemented by TouchEvents.
-				brush_size *= this.last_pressure;
-			}
-			else {
-				brush_size = this.brush_size;
+				brush_size *= this.#last.pressure;
+			} else {
+				brush_size = this.#brush.size;
 			}
 
-			if(diff > 20 && !this.drawing_mode)
+			if (diff > 20 && !this.#isDrawingMode) {
 				requestAnimationFrame(() => {
-					self.maskCtx.beginPath();
-					self.maskCtx.fillStyle = "rgb(0,0,0)";
-					self.maskCtx.globalCompositeOperation = "source-over";
-					self.maskCtx.arc(x, y, brush_size, 0, Math.PI * 2, false);
-					self.maskCtx.fill();
-					self.lastx = x;
-					self.lasty = y;
+					maskCtx.beginPath();
+					maskCtx.fillStyle = "rgb(0,0,0)";
+					maskCtx.globalCompositeOperation = "source-over";
+					maskCtx.arc(x, y, brush_size, 0, Math.PI * 2, false);
+					maskCtx.fill();
+					this.#last.x = x;
+					this.#last.y = y;
 				});
-			else
+			} else {
 				requestAnimationFrame(() => {
-					self.maskCtx.beginPath();
-					self.maskCtx.fillStyle = "rgb(0,0,0)";
-					self.maskCtx.globalCompositeOperation = "source-over";
+					maskCtx.beginPath();
+					maskCtx.fillStyle = "rgb(0,0,0)";
+					maskCtx.globalCompositeOperation = "source-over";
 
-					var dx = x - self.lastx;
-					var dy = y - self.lasty;
+					const dx = x - this.#last.x;
+					const dy = y - this.#last.y;
 
-					var distance = Math.sqrt(dx * dx + dy * dy);
-					var directionX = dx / distance;
-					var directionY = dy / distance;
+					const distance = Math.sqrt(dx * dx + dy * dy);
+					const directionX = dx / distance;
+					const directionY = dy / distance;
 
-					for (var i = 0; i < distance; i+=5) {
-						var px = self.lastx + (directionX * i);
-						var py = self.lasty + (directionY * i);
-						self.maskCtx.arc(px, py, brush_size, 0, Math.PI * 2, false);
-						self.maskCtx.fill();
+					for (let i = 0; i < distance; i += 5) {
+						const px = this.#last.x + (directionX * i);
+						const py = this.#last.y + (directionY * i);
+						maskCtx.arc(px, py, brush_size, 0, Math.PI * 2, false);
+						maskCtx.fill();
 					}
-					self.lastx = x;
-					self.lasty = y;
+					this.#last.x = x;
+					this.#last.y = y;
 				});
+			}
 
-			self.lasttime = performance.now();
-		}
-		else if(event.buttons == 2 || event.buttons == 5 || event.buttons == 32) {
-			const maskRect = self.maskCanvas.getBoundingClientRect();
+			this.#last.time = performance.now();
+		} else if (event.buttons === 2 || event.buttons === 5 || event.buttons === 32) {
+			const maskRect = this.#canvases.mask.getBoundingClientRect();
 			const x = event.offsetX || event.targetTouches[0].clientX - maskRect.left;
 			const y = event.offsetY || event.targetTouches[0].clientY - maskRect.top;
 
-			var brush_size = this.brush_size;
-			if(event instanceof PointerEvent && event.pointerType == 'pen') {
-				brush_size *= event.pressure;
-				this.last_pressure = event.pressure;
-			}
-			else if(window.TouchEvent && event instanceof TouchEvent && diff < 20){
-				brush_size *= this.last_pressure;
-			}
-			else {
-				brush_size = this.brush_size;
+			let brushSize = this.#brush.size;
+			if (event instanceof PointerEvent && event.pointerType === "pen") {
+				brushSize *= event.pressure;
+				this.#last.pressure = event.pressure;
+			} else if (window.TouchEvent && event instanceof TouchEvent && diff < 20) {
+				brushSize *= this.#last.pressure;
+			} else {
+				brushSize = this.#brush.size;
 			}
 
-			if(diff > 20 && !drawing_mode) // cannot tracking drawing_mode for touch event
+			if (diff > 20 && !this.#isDrawingMode) { // cannot tracking #isDrawingMode for touch event
 				requestAnimationFrame(() => {
-					self.maskCtx.beginPath();
-					self.maskCtx.globalCompositeOperation = "destination-out";
-					self.maskCtx.arc(x, y, brush_size, 0, Math.PI * 2, false);
-					self.maskCtx.fill();
-					self.lastx = x;
-					self.lasty = y;
+					maskCtx.beginPath();
+					maskCtx.globalCompositeOperation = "destination-out";
+					maskCtx.arc(x, y, brushSize, 0, Math.PI * 2, false);
+					maskCtx.fill();
+					this.#last.x = x;
+					this.#last.y = y;
 				});
-			else
+			} else {
 				requestAnimationFrame(() => {
-					self.maskCtx.beginPath();
-					self.maskCtx.globalCompositeOperation = "destination-out";
-					
-					var dx = x - self.lastx;
-					var dy = y - self.lasty;
+					maskCtx.beginPath();
+					maskCtx.globalCompositeOperation = "destination-out";
 
-					var distance = Math.sqrt(dx * dx + dy * dy);
-					var directionX = dx / distance;
-					var directionY = dy / distance;
+					const dx = x - this.#last.x;
+					const dy = y - this.#last.y;
 
-					for (var i = 0; i < distance; i+=5) {
-						var px = self.lastx + (directionX * i);
-						var py = self.lasty + (directionY * i);
-						self.maskCtx.arc(px, py, brush_size, 0, Math.PI * 2, false);
-						self.maskCtx.fill();
+					const distance = Math.sqrt(dx * dx + dy * dy);
+					const directionX = dx / distance;
+					const directionY = dy / distance;
+
+					for (let i = 0; i < distance; i += 5) {
+						const px = this.#last.x + (directionX * i);
+						const py = this.#last.y + (directionY * i);
+						maskCtx.arc(px, py, brushSize, 0, Math.PI * 2, false);
+						maskCtx.fill();
 					}
-					self.lastx = x;
-					self.lasty = y;
+					this.#last.x = x;
+					this.#last.y = y;
 				});
+			}
 
-				self.lasttime = performance.now();
+			this.#last.time = performance.now();
 		}
 	}
 
-	handlePointerDown(self, event) {
-		var brush_size = this.brush_size;
-		if(event instanceof PointerEvent && event.pointerType == 'pen') {
-			brush_size *= event.pressure;
-			this.last_pressure = event.pressure;
+	#handleMouseDown(event) {
+		const {brush} = this.#canvases;
+		this.#isDrawingMode = true;
+		let rect = brush.getBoundingClientRect();
+		let x = event.clientX - rect.left;
+		let y = event.clientY - rect.top;
+		this.#drawBrush(brush.getContext("2d"), x, y);
+	}
+
+	#handleMouseMove(event) {
+		this.#last.mousePosition.clientX = event.clientX;
+		this.#last.mousePosition.clientY = event.clientY;
+
+		const {brush} = this.#canvases;
+		const ctx = brush.getContext("2d");
+
+		const rect = brush.getBoundingClientRect();
+		const x = event.clientX - rect.left;
+		const y = event.clientY - rect.top;
+		if (this.#isDrawingMode) {
+			ctx.clearRect(0, 0, brush.width, brush.height);
+		}
+		this.#drawBrush(ctx, x, y);
+	}
+
+	#handleMouseOut() {
+		const {brush} = this.#canvases;
+		brush.getContext("2d").clearRect(0, 0, brush.width, brush.height);
+	}
+
+	#handleMouseUp() {
+		this.#isDrawingMode = false;
+	}
+
+	#drawBrush(ctx, x, y) {
+		ctx.beginPath();
+		ctx.arc(x, y, this.#brush.size, 0, Math.PI * 2, false);
+		ctx.stroke();
+	}
+
+	#handlePointerDown(event) {
+		let brushSize = this.#brush.size;
+		if (event instanceof PointerEvent && event.pointerType === "pen") {
+			brushSize *= event.pressure;
+			this.#last.pressure = event.pressure;
 		}
 
 		if ([0, 2, 5].includes(event.button)) {
-			self.drawing_mode = true;
-
 			event.preventDefault();
-			const maskRect = self.maskCanvas.getBoundingClientRect();
+			this.#isDrawingMode = true;
+
+			const {mask} = this.#canvases;
+			const maskRect = mask.getBoundingClientRect();
 			const x = event.offsetX || event.targetTouches[0].clientX - maskRect.left;
 			const y = event.offsetY || event.targetTouches[0].clientY - maskRect.top;
 
-			self.maskCtx.beginPath();
-			if (event.button == 0) {
-				self.maskCtx.fillStyle = "rgb(0,0,0)";
-				self.maskCtx.globalCompositeOperation = "source-over";
+			const ctx = mask.getContext("2d");
+			ctx.beginPath();
+			if (event.button === 0) {
+				ctx.fillStyle = "rgb(0,0,0)";
+				ctx.globalCompositeOperation = "source-over";
 			} else {
-				self.maskCtx.globalCompositeOperation = "destination-out";
+				ctx.globalCompositeOperation = "destination-out";
 			}
-			self.maskCtx.arc(x, y, brush_size, 0, Math.PI * 2, false);
-			self.maskCtx.fill();
-			self.lastx = x;
-			self.lasty = y;
-			self.lasttime = performance.now();
+			ctx.arc(x, y, brushSize, 0, Math.PI * 2, false);
+			ctx.fill();
+
+			this.#last.x = x;
+			this.#last.y = y;
+			this.#last.time = performance.now();
 		}
 	}
 
-	async save() {
-		const backupCtx = this.backupCanvas.getContext('2d', {willReadFrequently:true});
+	handlePointerUp(event) {
+		event.preventDefault();
+		this.#isDrawingMode = false;
+	}
 
-		backupCtx.clearRect(0,0,this.backupCanvas.width,this.backupCanvas.height);
-		backupCtx.drawImage(this.maskCanvas,
-			0, 0, this.maskCanvas.width, this.maskCanvas.height,
-			0, 0, this.backupCanvas.width, this.backupCanvas.height);
+	async save() {
+		const {backup, mask} = this.#canvases;
+		const backupCtx = backup.getContext("2d", {willReadFrequently: true});
+
+		backupCtx.clearRect(0, 0, backup.width, backup.height);
+		backupCtx.drawImage(mask,
+			0, 0, mask.width, mask.height,
+			0, 0, backup.width, backup.height);
 
 		// paste mask data into alpha channel
-		const backupData = backupCtx.getImageData(0, 0, this.backupCanvas.width, this.backupCanvas.height);
+		const backupData = backupCtx.getImageData(0, 0, backup.width, backup.height);
 
 		// refine mask image
 		for (let i = 0; i < backupData.data.length; i += 4) {
-			if(backupData.data[i+3] == 255)
-				backupData.data[i+3] = 0;
-			else
-				backupData.data[i+3] = 255;
+			if (backupData.data[i + 3] === 255) {
+				backupData.data[i + 3] = 0;
+			} else {
+				backupData.data[i + 3] = 255;
+			}
 
 			backupData.data[i] = 0;
-			backupData.data[i+1] = 0;
-			backupData.data[i+2] = 0;
+			backupData.data[i + 1] = 0;
+			backupData.data[i + 2] = 0;
 		}
 
-		backupCtx.globalCompositeOperation = 'source-over';
+		backupCtx.globalCompositeOperation = "source-over";
 		backupCtx.putImageData(backupData, 0, 0);
 
-		const formData = new FormData();
-		const filename = "clipspace-mask-" + performance.now() + ".png";
+		const filename = `clipspace-mask-${performance.now()}.png`;
 
-		const item =
-			{
-				"filename": filename,
-				"subfolder": "clipspace",
-				"type": "input",
-			};
+		const item = {
+			"filename": filename,
+			"subfolder": "clipspace",
+			"type": "input",
+		};
 
-		if(ComfyApp.clipspace.images)
+		if (ComfyApp.clipspace.images) {
 			ComfyApp.clipspace.images[0] = item;
-
-		if(ComfyApp.clipspace.widgets) {
-			const index = ComfyApp.clipspace.widgets.findIndex(obj => obj.name === 'image');
-
-			if(index >= 0)
-				ComfyApp.clipspace.widgets[index].value = item;
 		}
 
-		const dataURL = this.backupCanvas.toDataURL();
-		const blob = dataURLToBlob(dataURL);
+		if (ComfyApp.clipspace.widgets) {
+			const widget = ComfyApp.clipspace.widgets.find(obj => obj.name === "image");
+			if (widget !== undefined) {
+				widget.value = item;
+			}
+		}
 
-		let original_url = new URL(this.image.src);
+		const original_url = new URL(this.image.src);
+		const original_ref = {filename: original_url.searchParams.get("filename")};
 
-		const original_ref = { filename: original_url.searchParams.get('filename') };
-
-		let original_subfolder = original_url.searchParams.get("subfolder");
-		if(original_subfolder)
+		const original_subfolder = original_url.searchParams.get("subfolder");
+		if (original_subfolder) {
 			original_ref.subfolder = original_subfolder;
+		}
 
-		let original_type = original_url.searchParams.get("type");
-		if(original_type)
+		const original_type = original_url.searchParams.get("type");
+		if (original_type) {
 			original_ref.type = original_type;
+		}
 
-		formData.append('image', blob, filename);
-		formData.append('original_ref', JSON.stringify(original_ref));
-		formData.append('type', "input");
-		formData.append('subfolder', "clipspace");
+		const formData = new FormData();
+		const dataURL = this.#canvases.backup.toDataURL();
+		formData.append("image", dataURLToBlob(dataURL), filename);
+		formData.append("original_ref", JSON.stringify(original_ref));
+		formData.append("type", "input");
+		formData.append("subfolder", "clipspace");
 
 		this.saveButton.innerText = "Saving...";
 		this.saveButton.disabled = true;
@@ -645,16 +647,17 @@ class MaskEditorDialog extends ComfyDialog {
 
 app.registerExtension({
 	name: "Comfy.MaskEditor",
-	init(app) {
-		ComfyApp.open_maskeditor =
-			function () {
-				const dlg = MaskEditorDialog.getInstance();
-				if(!dlg.isOpened()) {
-					dlg.show();
-				}
-			};
+	init() {
+		ComfyApp.open_maskeditor = function () {
+			document.querySelectorAll("dialog").forEach((dialog) => {
+				dialog.close();
+			});
 
-		const context_predicate = () => ComfyApp.clipspace && ComfyApp.clipspace.imgs && ComfyApp.clipspace.imgs.length > 0
-		ClipspaceDialog.registerButton("MaskEditor", context_predicate, ComfyApp.open_maskeditor);
+			const dialog = new MaskEditorDialog(app);
+			dialog.show();
+		};
+
+		const context_predicate = () => ComfyApp.clipspace && ComfyApp.clipspace.imgs && ComfyApp.clipspace.imgs.length > 0;
+		ClipspaceDialog.registerButton("Mask Editor", context_predicate, ComfyApp.open_maskeditor);
 	}
 });

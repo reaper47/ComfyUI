@@ -169,8 +169,8 @@ function dragElement(dragEl, settings) {
 
 export class ComfyDialog {
 	constructor() {
-		this.element = $el("div.comfy-modal", {parent: document.body}, [
-			$el("div.comfy-modal-content", [$el("p", {$: (p) => (this.textElement = p)}), ...this.createButtons()]),
+		this.element = $el("dialog", {parent: document.body}, [
+			$el("div.comfy-modal-content"),
 		]);
 	}
 
@@ -179,22 +179,37 @@ export class ComfyDialog {
 			$el("button", {
 				type: "button",
 				textContent: "Close",
+				style: {
+					width: "100%",
+				},
 				onclick: () => this.close(),
 			}),
 		];
 	}
 
 	close() {
-		this.element.style.display = "none";
+		this.element.close();
 	}
 
 	show(html) {
 		if (typeof html === "string") {
-			this.textElement.innerHTML = html;
-		} else {
-			this.textElement.replaceChildren(html);
+			html = $el("p", {
+				textContent: html,
+				style: {
+					textAlign: "center",
+				},
+			});
 		}
-		this.element.style.display = "flex";
+
+		let children = [...this.createButtons()];
+		if (Array.isArray(html)) {
+			children.unshift(...html);
+		} else {
+			children.unshift(html);
+		}
+
+		this.element.firstChild.replaceChildren(...children);
+		this.element.showModal();
 	}
 }
 
@@ -208,16 +223,25 @@ class ComfySettingsDialog extends ComfyDialog {
 			$el("table.comfy-modal-content.comfy-table", [
 				$el("caption", {textContent: "Settings"}),
 				$el("tbody", {$: (tbody) => (this.textElement = tbody)}),
-				$el("button", {
-					type: "button",
-					textContent: "Close",
-					style: {
-						cursor: "pointer",
-					},
-					onclick: () => {
-						this.element.close();
-					},
-				}),
+				$el("tfoot", [
+					$el("td", {
+						colSpan: 2,
+						style: {
+							padding: 0,
+						}
+					}, [
+						$el("button", {
+							type: "button",
+							textContent: "Close",
+							onclick: () => {
+								this.element.close();
+							},
+							style:{
+								width: "100%",
+							},
+						}),
+					])
+				])
 			]),
 		]);
 		this.settings = [];
