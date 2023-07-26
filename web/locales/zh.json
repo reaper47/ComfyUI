@@ -1,0 +1,178 @@
+{
+  "actions": {
+    "clear": "清除",
+    "close": "关闭",
+    "delete": "删除",
+    "export": "导出",
+    "import": "导入",
+    "load": "加载",
+    "reconnecting": "重连中...",
+    "refresh": "刷新",
+    "save": "保存",
+    "template": "模版"
+  },
+  "contextMenu": {
+    "Add Group": "添加组",
+    "Add Node": "添加节点",
+    "Save Selected as Template": "将所选保存为模版"
+  },
+  "dialogs": {
+    "settings": {
+      "title": "设置"
+    }
+  },
+  "extensions": {
+    "core": {
+      "colorPalette": {
+        "label": "调色板"
+      },
+      "confirmClear": {
+        "label": "清除工作流时需要确认"
+      },
+      "editAttention": {
+        "delta": {
+          "label": "Ctrl+↑/↓ 调整精度"
+        }
+      },
+      "i18n": {
+        "label": "语言"
+      },
+      "invertMenuScrolling": {
+        "label": "反转菜单滚动"
+      },
+      "menuPosition": {
+        "label": "保存菜单位置"
+      },
+      "nodeSuggestions": {
+        "number": {
+          "label": "节点数量建议"
+        }
+      },
+      "previewFormat": {
+        "label": "预览图像时将其转换成更轻量的格式，比如：webp, jpeg等."
+      },
+      "promptFilename": {
+        "label": "保存工作流是提示输入文件名"
+      },
+      "snapToGrid": {
+        "gridSize": {
+          "label": "网格大小",
+          "tooltip": "当按住Shift键拖动和调整节点时，它们将对齐到网格上，该网格的大小由此控制"
+        }
+      }
+    }
+  },
+  "mainMenu": {
+    "clipspace": {
+      "label": "裁剪距离"
+    },
+    "extraOptions": {
+      "label": "额外选项",
+      "autoQueue": {
+        "tooltip": "自动开始队列前端的任务"
+      },
+      "batchCount": "批次数量"
+    },
+    "history": {
+      "clear": "清除历史记录",
+      "history": "历史纪律",
+      "view": "查看历史记录"
+    },
+    "loadDefault": {
+      "label": "载入默认工作流"
+    },
+    "queue": {
+      "clear": "清除队列",
+      "front": "队列前端",
+      "running": "运行中",
+      "pending": "排队中",
+      "prompt": "加入队列",
+      "view": "查看队列"
+    }
+  },
+  "nodes": {
+    "categories": {
+      "_for_testing": "测试节点",
+      "advanced": "高级",
+      "conditioning": "条件",
+      "image": "图像",
+      "latent": "潜空间",
+      "loaders": "加载器",
+      "mask": "蒙版",
+      "sampling": "采样器",
+      "utils": "工具"
+    },
+    "CLIPLoader": "加载CLIP",
+    "CLIPSetLastLayer": "CLIP跳过层",
+    "CLIPTextEncode": "文本编码器",
+    "CLIPVisionEncode": "CLIP Vision编码器",
+    "CLIPVisionLoader": "加载CLIP Vision",
+    "CheckpointLoader": "加载模型 (包含配置文件)",
+    "CheckpointLoaderSimple": "加载模型",
+    "ConditioningAverage ": "条件(Average)",
+    "ConditioningCombine": "条件(Combine)",
+    "ConditioningSetArea": "条件(设置区域)",
+    "ConditioningSetMask": "条件(设置蒙版)",
+    "ControlNetApply": "应用ControlNet",
+    "ControlNetLoader": "加载ControlNet模型",
+    "CropMask": "裁剪蒙版",
+    "DiffControlNetLoader": "加载ControlNet模型(diff)",
+    "DiffusersLoader": "Diffusers加载器",
+    "EmptyLatentImage": "空图像",
+    "FeatherMask": "羽化蒙版",
+    "GLIGENLoader": "GLIGEN加载器",
+    "GLIGENTextBoxApply": "GLIGENTextBoxApply",
+    "HypernetworkLoader": "Hypernetwork加载器",
+    "ImageBlend": "图像混合",
+    "ImageBlur": "图像模糊",
+    "ImageInvert": "图像反色",
+    "ImagePadForOutpaint": "外扩图像",
+    "ImageQuantize": "图像量化",
+    "ImageScale": "图像放大",
+    "ImageScaleBy": "放大到",
+    "ImageSharpen": "图像锐化",
+    "ImageToMask": "将图像转换成蒙版",
+    "ImageUpscaleWithModel": "图像放大(使用放大模型)",
+    "InvertMask": "蒙版反色",
+    "KSampler": "K采样器",
+    "KSamplerAdvanced": "K采样器(高级)",
+    "LatentComposite": "潜在复合",
+    "LatentCompositeMasked": "蒙版后潜在复合",
+    "LatentCrop": "潜空间裁剪",
+    "LatentFlip": "潜空间翻转",
+    "LatentFromBatch": "Latent From Batch",
+    "LatentRotate": "潜空间旋转",
+    "LatentUpscale": "潜空间放大",
+    "LatentUpscaleBy": "潜空间放大到",
+    "LoadImage": "加载图像",
+    "LoadImageMask": "加载图像(作为蒙版)",
+    "LoadLatent": "加载潜空间图像",
+    "LoraLoader": "加载LoRA",
+    "MaskComposite": "蒙版复合",
+    "MaskToImage": "将蒙版转换成图像",
+    "ModelMergeBlocks": "按Blocks融合模型",
+    "ModelMergeSimple": "融合模型",
+    "NoteNode": "注释",
+    "PreviewImage": "图像预览",
+    "PrimitiveNode": "基础节点",
+    "RebatchLatents": "Rebatch Latents",
+    "RepeatLatentBatch": "Repeat Latent Batch",
+    "RerouteNode": "衔接节点",
+    "SaveImage": "保存图像",
+    "SaveLatent": "保存潜空间图像",
+    "SetLatentNoiseMask": "设置潜空间噪声蒙版",
+    "SolidMask": "SolidMask",
+    "StyleModelApply": "应用Style模型",
+    "StyleModelLoader": "加载Style模型",
+    "TomePatchModel": "TomePatchModel",
+    "UpscaleModelLoader": "加载放大模型",
+    "VAEDecode": "VAE解码",
+    "VAEDecodeTiled": "VAE解码(分块)",
+    "VAEEncode": "VAE编码",
+    "VAEEncodeForInpaint": "VAE编码(重绘)",
+    "VAEEncodeTiled": "VAE编码(分块)",
+    "VAELoader": "加载VAE",
+    "unCLIPCheckpointLoader": "unCLIP模型加载",
+    "unCLIPConditioning": "unCLIP条件"
+  }
+}
