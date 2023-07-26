@@ -1,6 +1,8 @@
 import { app } from "../../scripts/app.js";
 import { ComfyWidgets } from "../../scripts/widgets.js";
 
+// Adds defaults for quickly adding nodes with middle-click on the input/output
+
 app.registerExtension({
 	name: "Comfy.SlotDefaults",
 	suggestionsNumber: null,

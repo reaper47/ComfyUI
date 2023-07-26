@@ -779,8 +779,7 @@ export class ComfyUI {
 					}
 				},
 			}),
-		])
-		;
+		]);
 
 		const devMode = this.settings.addSetting({
 			id: "Comfy.DevMode",
